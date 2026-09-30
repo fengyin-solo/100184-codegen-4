@@ -7,16 +7,24 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.training_seed import TRAINING_SEED_ROWS
+
+# 业务模块表：只统计进 /api/overview，培训台账的内部表（人员/操作员/排班/提醒）不混入看板。
+BUSINESS_MODULES = list(SEED_ROWS.keys())
 
 
 class Store:
     def __init__(self) -> None:
         self._tables: dict[str, list[dict[str, Any]]] = {
-            name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
+            name: [dict(row) for row in rows]
+            for name, rows in {**SEED_ROWS, **TRAINING_SEED_ROWS}.items()
         }
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)
+
+    def business_names(self) -> list[str]:
+        return list(BUSINESS_MODULES)
 
     def rows(self, module: str) -> list[dict[str, Any]]:
         return self._tables.setdefault(module, [])
@@ -27,9 +35,12 @@ class Store:
                 return row
         return None
 
+    def next_id(self, module: str) -> int:
+        return max((int(row.get("id", 0)) for row in self.rows(module)), default=0) + 1
+
     def overview(self) -> dict[str, object]:
         modules: list[dict[str, object]] = []
-        for name in self.module_names():
+        for name in self.business_names():
             rows = self.rows(name)
             modules.append({
                 "name": name,
