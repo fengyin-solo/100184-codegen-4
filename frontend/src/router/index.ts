@@ -19,6 +19,7 @@ const Traffic = () => import('@/views/traffic/index.vue')
 const Complaint = () => import('@/views/complaint/index.vue')
 const Fund = () => import('@/views/fund/index.vue')
 const Archive = () => import('@/views/archive/index.vue')
+const Training = () => import('@/views/training/index.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -42,6 +43,7 @@ const router = createRouter({
     { path: '/complaint', name: 'complaint', component: Complaint },
     { path: '/fund', name: 'fund', component: Fund },
     { path: '/archive', name: 'archive', component: Archive },
+    { path: '/training', name: 'training', component: Training },
   ],
 })
 

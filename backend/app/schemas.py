@@ -28,6 +28,16 @@ class EntryPayload(BaseModel):
     remark: str | None = None
 
 
+class AssignmentPayload(BaseModel):
+    """养护作业排单时提交的人员与作业信息。"""
+
+    team: str
+    assignment_no: str
+    work_name: str
+    scheduled_date: str
+    worker_ids: list[str]
+
+
 
 class PipeEntry(BaseModel):
     """管段明细结构。"""

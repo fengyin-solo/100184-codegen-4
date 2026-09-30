@@ -12,6 +12,16 @@
         <strong class="stat-value">{{ card.value }}</strong>
       </article>
     </div>
+
+    <section class="workbench-card">
+      <div>
+        <span class="stat-label">班组工作台 · 复训到期待办（{{ workbench.team }}）</span>
+        <strong class="workbench-total">{{ workbench.total }}</strong>
+        <span class="page-desc">待办直接读取培训台账复训记录，逾期 {{ workbench.overdue }} 条、30 天内到期 {{ workbench.due_soon }} 条。</span>
+      </div>
+      <RouterLink class="btn" to="/training">打开资质培训台账</RouterLink>
+    </section>
+
     <table class="data-table">
       <thead>
         <tr><th>业务模块</th><th>今日新增</th><th>待处理</th><th>异常量</th></tr>
@@ -29,26 +39,56 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 import { fetchJson } from '@/api/client'
+import { useSessionStore } from '@/stores/session'
 
 type Overview = {
   cards: { label: string; value: number }[]
   modules: { name: string; created: number; pending: number; abnormal: number }[]
 }
 
+type Workbench = {
+  team: string
+  total: number
+  overdue: number
+  due_soon: number
+  items: unknown[]
+}
+
+const session = useSessionStore()
 const cards = ref<Overview['cards']>([])
 const moduleRows = ref<Overview['modules']>([])
+const workbench = ref<Workbench>({ team: session.team || '全部班组', total: 0, overdue: 0, due_soon: 0, items: [] })
 
-onMounted(async () => {
+async function loadOverview() {
   try {
     const payload = await fetchJson<Overview>('/api/overview')
     cards.value = payload.cards
     moduleRows.value = payload.modules
   } catch {
-    cards.value = [{"label": "业务模块", "value": 0}, {"label": "今日新增", "value": 0}]
-    moduleRows.value = [{"name": "管段档案", "created": 0, "pending": 0, "abnormal": 0}, {"name": "检查井", "created": 0, "pending": 0, "abnormal": 0}, {"name": "阀门井室", "created": 0, "pending": 0, "abnormal": 0}, {"name": "泵站设施", "created": 0, "pending": 0, "abnormal": 0}, {"name": "巡查任务", "created": 0, "pending": 0, "abnormal": 0}, {"name": "缺陷登记", "created": 0, "pending": 0, "abnormal": 0}, {"name": "内窥检测", "created": 0, "pending": 0, "abnormal": 0}, {"name": "修复施工", "created": 0, "pending": 0, "abnormal": 0}, {"name": "压力监测", "created": 0, "pending": 0, "abnormal": 0}, {"name": "流量监测", "created": 0, "pending": 0, "abnormal": 0}, {"name": "泄漏排查", "created": 0, "pending": 0, "abnormal": 0}, {"name": "清淤疏浚", "created": 0, "pending": 0, "abnormal": 0}, {"name": "养护材料", "created": 0, "pending": 0, "abnormal": 0}, {"name": "养护机械", "created": 0, "pending": 0, "abnormal": 0}, {"name": "占道许可", "created": 0, "pending": 0, "abnormal": 0}, {"name": "公众诉求", "created": 0, "pending": 0, "abnormal": 0}, {"name": "养护资金", "created": 0, "pending": 0, "abnormal": 0}, {"name": "管网档案", "created": 0, "pending": 0, "abnormal": 0}]
+    cards.value = []
+    moduleRows.value = []
   }
+}
+
+async function loadWorkbench() {
+  try {
+    workbench.value = await fetchJson<Workbench>('/api/training/workbench', {
+      headers: session.authHeaders,
+    })
+  } catch {
+    workbench.value = { team: session.team || '全部班组', total: 0, overdue: 0, due_soon: 0, items: [] }
+  }
+}
+
+onMounted(() => {
+  void loadOverview()
+  void loadWorkbench()
+})
+
+watch(() => [session.userId, session.role, session.team], () => {
+  void loadWorkbench()
 })
 </script>

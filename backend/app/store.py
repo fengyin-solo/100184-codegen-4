@@ -7,12 +7,14 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.training_seed import TRAINING_TABLES
 
 
 class Store:
     def __init__(self) -> None:
         self._tables: dict[str, list[dict[str, Any]]] = {
-            name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
+            name: [dict(row) for row in rows]
+            for name, rows in {**SEED_ROWS, **TRAINING_TABLES}.items()
         }
 
     def module_names(self) -> list[str]:
@@ -30,6 +32,8 @@ class Store:
     def overview(self) -> dict[str, object]:
         modules: list[dict[str, object]] = []
         for name in self.module_names():
+            if name.startswith("training_"):
+                continue
             rows = self.rows(name)
             modules.append({
                 "name": name,
